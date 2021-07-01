@@ -1,7 +1,59 @@
 from obspy.core import read
+from obspy import Stream
+import matplotlib.pyplot as plt
 import os
 
+def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='images/'):
+    """
+    Seismic data reader with preprocessing and plotting functions.
+    
+    Arguments:
+    Required:
+    filename - file name of seismic data
+    Optional:
+    freqmin - minimum frequency for bandpass filter 
+    freqmax - maximum frequency for bandpass filter
+    plot - dayplot of day
+    imgdir - directory to save seismic plots
+    """
+    # Read in data
+    st=read(filename)
+    stime=st[0].stats.starttime
+    
+    # Select traces from stream and place in order
+    st2=Stream()
+    for station in stations:
+        for channel in channels:
+            st2+=st.select(station=station,channel=channel)
 
+    st.clear()  
+    # Preprocess stream
+    st2.detrend(type='linear')
+    st2.filter('bandpass',freqmin=freqmin,freqmax=freqmax)
+    
+    # Name file base on start time
+    fileid=('%04d-%02d-%02d-%02d-%02d-%02d'%(stime.year,stime.month,stime.day,stime.hour,stime.minute,stime.second))
+    
+    # Plot seimic wave forms for inspection
+    if plot==True:
+        
+        if not os.path.exists(imgdir):
+            os.makedirs(imgdir)
+                    
+        fig, axs =plt.subplots(nrows=len(st2),sharex=True,sharey=False,figsize=(10, 50))
+        plt.xlabel('Time (s)')
+        
+        for i in range(len(st2)):
+            axs[i].set_title("%s - %s: %s - %s"%(st2[i].stats.station,st2[i].stats.channel,st2[i].stats.starttime,st2[i].stats.endtime))
+            axs[i].plot(st2[i].times(),st2[i].data,'k')
+            axs[i].set_ylabel('Amplitude (counts)')
+            axs[i].grid()
+       
+        plt.savefig("%s%s.png"%(imgdir,fileid))
+        plt.close(fig)    
+
+    return st
+    
 def tr_write(tr,path,id,resp=False,freqmin=0.01,freqmax=50):
     """ Removes the instrument response, and exports data to a SAC format.
     
