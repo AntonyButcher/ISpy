@@ -9,7 +9,25 @@ from obspy.core import read
 from obspy.signal.trigger import coincidence_trigger
 from obspy.signal.trigger import z_detect
 from obspy.signal.trigger import trigger_onset
+from obspy.signal.trigger import plot_trigger
 
+def trigger_check(st,station,channel,on=1,off=0.5,window=5):
+    """Function to check the stalta trigger levels using zdetect.
+    
+    Arguments:
+    Required:
+    st - obspy stream
+    station - station to check
+    channel - channel to check
+    windown - zdetect window"""
+    
+    st=st.select(station=station,channel=channel)
+    df=st[0].stats.sampling_rate
+    
+    for tr in st:
+        cft=z_detect(tr.data,int(window*df))
+        plot_trigger(tr,cft,on,off)
+        
 
 def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
     """Coincidence function based on obspy's zdetect function. 

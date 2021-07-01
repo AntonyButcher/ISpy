@@ -52,7 +52,7 @@ def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='
         plt.savefig("%s%s.png"%(imgdir,fileid))
         plt.close(fig)    
 
-    return st
+    return st2
     
 def tr_write(tr,path,id,resp=False,freqmin=0.01,freqmax=50):
     """ Removes the instrument response, and exports data to a SAC format.
