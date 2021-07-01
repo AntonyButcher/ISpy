@@ -90,6 +90,8 @@ def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
                 plt.axvline(x=onset_time-(ttime-2),color='r')
                 plt.xlim(0,5)
                 plt.xlabel('Time (s)')
+                plt.ylabel('Displacement (m)')
+                plt.tight_layout()
                 plt.savefig("%s%s.png"%(imgpath,file))
                 plt.close(fig)
     #             plt.show()

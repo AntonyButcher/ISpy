@@ -7,3 +7,4 @@ __email__ = ""
 import ISpy.model.sens
 import ISpy.detect.trigger
 import ISpy.utils.utils
+import ISpy.assess.magnitude
