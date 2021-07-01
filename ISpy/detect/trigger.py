@@ -2,65 +2,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+
+from ISpy.utils import utils
+
 from obspy.core import read
 from obspy.signal.trigger import coincidence_trigger
 from obspy.signal.trigger import z_detect
 from obspy.signal.trigger import trigger_onset
 
-def tr_write(tr,path,id,resp=False,freqmin=0.01,freqmax=50):
-    """ Removes the instrument response, and exports data to a SAC format.
-    
-    Arguments:
-    Required:
-    tr - obspy trace
-    path - file path e.g. 'data/%s/SAC/'%(id)
-    id - unique event id
-    
-    returns:
-    file - name of sac waveform file.
-    """
-    network=tr.stats.network
-    if network=="":
-        network="GB"    
-    station=tr.stats.station
-    channel=tr.stats.channel
-    date=tr.stats.starttime
-    
-    # Add location in case not present. Needed for response removal.
-    tr.stats.location='00'
-    
-    if resp==True:
-        resp_file='data/RESP/RESP.%s.%s.00.%s'%(network,station,channel)
-        if not os.path.exists(resp_file):
-#             resp_file='RESP/RESP.%s.%s..%s'%(network,station,channel)
-#             if not os.path.exists(resp_file):
-            print('Response file could not be found')            
-            pass
-        else:
-#                 tr.taper(max_percentage=0.01,type='cosine')
-            tr=tr.detrend(type='linear')
-            pre_filt = (freqmin,freqmin+0.5,freqmax-0.5,freqmax)
-            seedresp = {'filename': resp_file, 'date':date, 'units': 'DISP'} 
-            tr.simulate(paz_remove=None, pre_filt=pre_filt, seedresp=seedresp)
-    else:
-        pass
-    
-    # Create network name in none exists
-    if network=="":
-        network="xx"
-        
-    if not os.path.exists(path):
-        os.makedirs(path)
-        
-    file="%s.%s.%s.%s.sac"%(network,station,id,channel)
-    filename="%s%s"%(path,file)
-    print(filename)
-#     tr=tr.slice(tr.stats.starttime+30,tr.stats.starttime+90)
-    tr.write(filename,format='SAC')
-    
-    return file
 
-def iscoin(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
+def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
     """Coincidence function based on obspy's zdetect function. 
     Identifies triggers and saves sac files with pick times.
     
@@ -108,8 +59,8 @@ def iscoin(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
 
                 # Save SAC file
                 sacpath='data/%s/SAC/'%(id)
-                file=tr_write(st3[0],sacpath,id,resp=True,freqmin=0.01,freqmax=50)
-                print(file)
+                file=utils.tr_write(st3[0],sacpath,id,resp=True,freqmin=0.01,freqmax=50)
+#                 print(file)
 
                 imgpath='data/%s/img/'%(id)
                 if not os.path.exists(imgpath):
@@ -127,7 +78,7 @@ def iscoin(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
 
                 # Read in again to include pick times
                 st4=read("%s%s"%(sacpath,file))
-                print(onset_time-(ttime-2))
+#                 print(onset_time-(ttime-2))
 
                 if channel=='HHZ':
                     st4[0].stats.sac['ka']='IPU0'
@@ -137,7 +88,7 @@ def iscoin(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
                     st4[0].stats.sac['kt0']='ISU0'
                     st4[0].stats.sac['t0']=onset_time-(ttime-2)
 
-                file=tr_write(st4[0],sacpath,id,resp=False,freqmin=0.01,freqmax=50)
+                file=utils.tr_write(st4[0],sacpath,id,resp=False,freqmin=0.01,freqmax=50)
 
         
     

@@ -1,0 +1,7 @@
+bg x
+qdp off
+sc sactosac -m data/$1$/SAC/*.sac
+r data/$1$/SAC/CU.$2$*.sac
+ppk
+wh
+q
