@@ -108,7 +108,72 @@ def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
 
                 file=utils.tr_write(st4[0],sacpath,id,resp=False,freqmin=0.01,freqmax=50)
 
-        
+    return id 
     
+def sac_picker(id,stations):
+    """
+    SAC wrapper. Opens pick file created from iscoincidence in SAC.
     
+    Arguments:
+    Required:
+    id - event id assigned by iscoincidence
+    stations - station list
+    
+    Notes:
+    Opens a xwindow and ppk plot which is used to pick P and S arrivals.
+    In xwindow pick p-wave on z component using 'p' key and s-wave on e and n component 
+    using 's' key. When finished press q.
+    
+    """
+    
+    for station in stations:
+        sac="printf \"m pick.mac %s %s \"| sac"%(id,station)
+        os.system(sac)  
+    
+def sac_to_nnloc(id,stations,channels,pick_err=0.02):
+    """
+    Exports sac header into an .obs file for NNLOC.
+    
+    Arguments:
+    Required:
+    id - event id assigned by iscoincidence
+    optional:
+    pick_err - pick error in seconds
+    """
+    
+    # Read in sac files
+    pickfiles="data/%s/SAC/*.sac"%(id)
+    st_picks=read(pickfiles)
+    
+    # Define and open nnloc .obs file
+    event_out_fname="%s.obs"%(id)
+    f_out = open(event_out_fname, 'w')
+    
+    # Loop through each station and channel and write picks to .obs file
+    for station in stations:
+        for channel in channels:
+            st_tmp=st_picks.select(station=station,channel=channel)
+            stime=st_tmp[0].stats.starttime
 
+            if channel == 'HHZ':
+                phase='P'
+                ptime=stime+st_tmp[0].stats.sac['a']
+            else:
+                phase='S'
+                ptime=stime+st_tmp[0].stats.sac['t0']
+            
+            # In case no pick present
+            if stime-ptime == 0:
+                pass
+            
+            else:
+                pick_date=str('%04d%02d%02d'%(ptime.year,ptime.month,ptime.day))
+                pick_hrmin=str('%02d%02d'%(ptime.hour,ptime.minute))
+                pick_secs=str('%02d.%03d'%(ptime.second,ptime.microsecond))
+                pick_err=str(pick_err)
+
+                f_out.write(" ".join((station, "? ? ?", phase, "?", pick_date, pick_hrmin, pick_secs,"GAU", pick_err, "0.0 0.0 0.0 1.0", "\n")))
+
+    f_out.close()    
+    print('%s file created'%(event_out_fname))
+    
