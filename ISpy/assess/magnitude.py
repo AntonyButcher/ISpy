@@ -78,3 +78,34 @@ def ml_luc_amp(mag,r):
     amp=(10**logamp)/1e9
     
     return amp
+
+def detect_limits(mag,depth,noise=1e-7,boxsize=25,sampling=0.1):
+    """
+    Creates an array of detectability limits. Uses an inverse of the Luckett scale.
+    Epicentre is in the centre of the box.
+    
+    Arguments:
+    Required:
+    mag - ML magnitude
+    depth - depth of event
+    Optional:
+    noise - noise threshold. Displacement (m)
+    boxsize - size of search area in km
+    sampling - spacing between cells
+    """
+    
+    # Define parameters
+    array_size=int(boxsize/sampling)
+    x=y=np.arange(-boxsize/2,boxsize/2,sampling)
+
+    array=np.empty((array_size,array_size),dtype=float)
+    
+    for i in range(array.shape[0]):
+        for j in range(array.shape[1]):
+            hypo=np.sqrt((x[i])**2+(y[j])**2+depth**2)
+            amp=ml_luc_amp(mag,hypo)
+            array[i,j]=amp
+            
+    detectable=np.where(array>=noise,1,0)
+    
+    return x,y,detectable
