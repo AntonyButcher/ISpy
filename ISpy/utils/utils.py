@@ -45,7 +45,7 @@ def file_scanner(path,logname='file.log'):
     return new_files
 
 
-def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='images/'):
+def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='images/',openimg=True):
     """
     Seismic data reader with preprocessing and plotting functions.
     
@@ -92,7 +92,11 @@ def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='
             axs[i].grid()
        
         plt.savefig("%s%s.png"%(imgdir,fileid))
-        plt.close(fig)    
+        plt.close(fig)  
+        
+        if openimg==True:
+        
+            os.system ("open %s%s.png"%(imgdir,fileid))
 
     return st2
     

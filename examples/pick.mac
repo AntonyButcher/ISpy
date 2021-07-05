@@ -1,7 +1,9 @@
 bg x
 qdp off
 sc sactosac -m data/$1$/SAC/*.sac
-r data/$1$/SAC/CU.$2$*.sac
+r data/$1$/SAC/CU.$2$*E.sac
+r more data/$1$/SAC/CU.$2$*N.sac
+r more data/$1$/SAC/CU.$2$*Z.sac
 ppk
 wh
 q
