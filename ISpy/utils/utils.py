@@ -2,6 +2,48 @@ from obspy.core import read
 from obspy import Stream
 import matplotlib.pyplot as plt
 import os
+import glob
+
+
+def file_scanner(path,logname='file.log'):
+    """
+    Checks and records which waveform files have been processed.
+    
+    Arguments:
+    Required:
+    path - file path of waveform files e.g. "data/2019-08*"
+    Optional:
+    logname - file name of log file, default is 'file.log'
+    """
+    # Check if log file exists, if not create one
+    if not os.path.exists(logname):
+        f_out=open(logname,'x')
+        f_out.write("ISpy trigger log file \nCreated %s \n"%(time.asctime()))
+        f_out.close()
+        
+        old_files=[]
+
+    # Read in file names from log file
+    else:
+        f_in=open(logname,'r')
+        old_files = f_in.read().splitlines()[2:]
+        f_in.close()
+
+    # Current list of files 
+    files=glob.glob(path)
+    
+    # List of new files found in the directory
+    new_files=list(set(files) - set(old_files))
+
+    f_out2=open(logname,'a')
+    
+    # Add the new files to log file
+    for file in new_files:
+        f_out2.write('%s\n'%(file))
+    f_out2.close()
+    
+    return new_files
+
 
 def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='images/'):
     """
