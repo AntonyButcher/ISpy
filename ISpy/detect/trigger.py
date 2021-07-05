@@ -49,15 +49,19 @@ def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
     stime=st[0].stats.starttime
     
     # Apply coindidence filter using z-detect method
-    trig=coincidence_trigger('zdetect',1,0.5,st2,3,details=True,nsta=int(window*df))
+    trig=coincidence_trigger('zdetect',on,off,st2,3,details=True,nsta=int(window*df))
     
     trig_pd=pd.DataFrame(trig)
     
-    if len(trig_pd)>0:
-        
-        ttime=trig_pd.time[0]
-        
+    print(trig_pd.time[0])
+    
+    ids=[]
+
+    for ttime in trig_pd.time:
+#         ttime=trig_pd.time[0]
+
         id=('%04d%02d%02d%02d%02d%02d'%(ttime.year,ttime.month,ttime.day,ttime.hour,ttime.minute,ttime.second))
+        ids.append(id)
         print(id)
         for station in stations:
             for channel in ('HHE','HHN','HHZ'):
@@ -77,7 +81,7 @@ def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
 
                 # Save SAC file
                 sacpath='data/%s/SAC/'%(id)
-                file=utils.tr_write(st3[0],sacpath,id,resp=True,freqmin=0.01,freqmax=50)
+                file=utils.tr_write(st3[0],sacpath,id,resp=True,freqmin=2,freqmax=50)
 #                 print(file)
 
                 imgpath='data/%s/img/'%(id)
@@ -108,9 +112,9 @@ def iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5):
                     st4[0].stats.sac['kt0']='ISU0'
                     st4[0].stats.sac['t0']=onset_time-(ttime-2)
 
-                file=utils.tr_write(st4[0],sacpath,id,resp=False,freqmin=0.01,freqmax=50)
+                file=utils.tr_write(st4[0],sacpath,id,resp=False,freqmin=2,freqmax=50)
 
-    return id 
+    return ids
     
 def sac_picker(id,stations):
     """
@@ -178,4 +182,6 @@ def sac_to_nnloc(id,stations,channels,pick_err=0.02):
 
     f_out.close()    
     print('%s file created'%(event_out_fname))
+    
+    return event_out_fname
     

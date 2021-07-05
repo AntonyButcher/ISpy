@@ -3,7 +3,7 @@ from obspy import Stream
 import matplotlib.pyplot as plt
 import os
 import glob
-
+import time as time
 
 def file_scanner(path,logname='file.log'):
     """
@@ -45,7 +45,7 @@ def file_scanner(path,logname='file.log'):
     return new_files
 
 
-def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='images/',openimg=True):
+def data_in(filename,stations,channels,freqmin=2,freqmax=10, plot=False,imgdir='images/',openimg=True):
     """
     Seismic data reader with preprocessing and plotting functions.
     
@@ -70,13 +70,13 @@ def data_in(filename,stations,channels,freqmin=3,freqmax=10, plot=False,imgdir='
 
     st.clear()  
     # Preprocess stream
-    st2.detrend(type='linear')
-    st2.filter('bandpass',freqmin=freqmin,freqmax=freqmax)
+    st2=st2.detrend(type='linear')
+    st2=st2.filter('bandpass',freqmin=freqmin,freqmax=freqmax)
     
     # Name file base on start time
     fileid=('%04d-%02d-%02d-%02d-%02d-%02d'%(stime.year,stime.month,stime.day,stime.hour,stime.minute,stime.second))
     
-    # Plot seimic wave forms for inspection
+    # Plot seismic wave forms for inspection
     if plot==True:
         
         if not os.path.exists(imgdir):
