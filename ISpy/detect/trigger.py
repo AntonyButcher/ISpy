@@ -132,6 +132,16 @@ def sac_picker(id,stations):
     
     """
     
+    # Check sac script exists, if not make one.
+    fname='pick.mac'
+    if not os.path.exists(fname):
+        sacfile=open(fname,'x')
+        sacfile.write('bg x\nqdp off\nsc sactosac -m data/$1$/SAC/*.sac\n')
+        sacfile.write('r data/$1$/SAC/CU.$2$*E.sac\nr more data/$1$/SAC/CU.$2$*N.sac\nr more data/$1$/SAC/CU.$2$*Z.sac\n')
+        sacfile.write('ppk\nwh\nq\n')
+        sacfile.close()
+    
+    # Plot each components together for each station.
     for station in stations:
         sac="printf \"m pick.mac %s %s \"| sac"%(id,station)
         os.system(sac)  
