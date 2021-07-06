@@ -16,20 +16,20 @@ Trigger script which continuously scans a waveform directory and processes new f
 7. User asked if they want a .obs exported. If yes, dir moved to 'Local' dir, if no, dir moved to 'Noise' dir.
 8. If .obs file requested, file exported.
 
-Requires SAC to be install. (https://members.elsi.jp/~george/sac-download.html)
+Requires SAC to be installed. (https://members.elsi.jp/~george/sac-download.html)
 
 ## Functions:
 
 ### utils.py
-file_scanner - Checks and records which waveform files have been processed.
-data_in - Seismic data reader with preprocessing and plotting functions.
-tr_write - Removes the instrument response, and exports data to a SAC format.
+- file_scanner - Checks and records which waveform files have been processed.
+- data_in - Seismic data reader with preprocessing and plotting functions.
+- tr_write - Removes the instrument response, and exports data to a SAC format.
 
 ### trigger.py
-trigger_check - Function to check the stalta trigger levels using zdetect.
-iscoincidence - Coincidence function based on obspy's zdetect function. Identifies triggers and saves sac files with pick times.
-sac_picker - SAC wrapper. Opens pick file created from iscoincidence in SAC.
-sac_to_nnloc - Exports sac header into an .obs file for NNLOC.
+- trigger_check - Function to check the stalta trigger levels using zdetect.
+- iscoincidence - Coincidence function based on obspy's zdetect function. Identifies triggers and saves sac files with pick times.
+- sac_picker - SAC wrapper. Opens pick file created from iscoincidence in SAC.
+- sac_to_nnloc - Exports sac header into an .obs file for NNLOC.
 
 # Installation
 
