@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from convertbng.util import convert_bng, convert_lonlat
+# from convertbng.util import convert_bng, convert_lonlat
 
 
 def nnloc_read(locfile, maxerr=5):
@@ -211,3 +211,24 @@ def latlong_distn(lat1, lon1, lat2, lon2):
     # Remember to multiply arc by the radius of the earth
     # in your favorite set of units to get length.
     return (arc*6378.137)
+
+def loc_log(id,rawfile,obsfile):
+    """
+    Event log file for ISpy.
+    
+    Arguments:
+    Required:
+    id - event id
+    rawfile - original raw waveform file
+    obsfile - NNLOC obs file name
+    """
+    
+    fname='data/%s/%s.log'%(id,id)
+    logfile=open(fname,'x')
+    
+    logfile.write("ISpy event file, created %s\n"%((time.asctime())))
+    logfile.write("EVENT %s\n"%(id))
+    logfile.write("RAW %s\n"%(rawfile))
+    logfile.write("OBSFILE %s\n"%(obsfile))
+    
+    logfile.close()

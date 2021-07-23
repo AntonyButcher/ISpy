@@ -36,6 +36,8 @@ except: pass
 print('Welcome to ISmonitor.py')
 print('Waiting')
 
+utils.file_scanner(path,logname='file.log')
+
 # Create a continuous loop
 while True:
     
@@ -56,7 +58,7 @@ while True:
             # Read in data and create .png image of data for manual inspection
             st=utils.data_in(file,stations,channels,plot=True)
             
-            # Apply coincidence filter, which creates .sac files when triggered
+            # Apply coincidence trigger, which creates .sac files when triggered
             ids=trigger.iscoincidence(st,stations,channel='HHE',on=1,off=0.5,minsta=3,window=5)
             
             for id in ids:
@@ -79,6 +81,8 @@ while True:
                     
                 else:
                     var = input("Would you like to output an .obs file? (y/n)")
+                    
+                
         
         print('Waiting')
         

@@ -1,6 +1,8 @@
 from obspy.core import read
+from obspy import read_inventory
 from obspy import Stream
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 import glob
 import time as time
@@ -44,8 +46,99 @@ def file_scanner(path,logname='file.log'):
     
     return new_files
 
+def data_in2(files,stations,channels,freqmin=1.5,freqmax=20.5, plot=False,imgdir='images/',openimg=True,inv=True):
+    """
+    Seismic data reader with preprocessing and plotting functions.
+    
+    Arguments:
+    Required:
+    filename - file name of seismic data
+    Optional:
+    freqmin - minimum frequency for bandpass filter 
+    freqmax - maximum frequency for bandpass filter
+    plot - dayplot of day
+    imgdir - directory to save seismic plots
+    """
+    # Read in data  
+    st=Stream()
+    for file in files:
+        st+=read(file)
+    st=st.merge()
+    stime=st[0].stats.starttime
+    
+    # Select traces from stream and place in order
+    st2=Stream()
+    for station in stations:
+        for channel in channels:
+            st2+=st.select(station=station,channel=channel)
 
-def data_in(filename,stations,channels,freqmin=2,freqmax=10, plot=False,imgdir='images/',openimg=True):
+    st.clear()  
+    # Preprocess stream
+    
+    st2=st2.detrend(type='linear')
+    st2=st2.taper(max_percentage=0.02,type='cosine')
+    st2=st2.filter('bandpass',freqmin=freqmin,freqmax=freqmax)
+    
+    # Instrument correct
+    for tr in st2:
+        station=tr.stats.station
+
+#         # Add location in case not present. Needed for response removal.
+#         tr.stats.location='00'
+
+        if inv==True:
+            inv_file='Dataless/%s.dataless'%(station)
+#             print(inv_file)
+            if not os.path.exists(inv_file):
+                print('Response file could not be found')            
+                pass
+            else:
+    #                 tr.taper(max_percentage=0.01,type='cosine')
+                finv = read_inventory(inv_file)
+
+                tr=tr.detrend(type='linear')
+                pre_filt = (freqmin,freqmin+0.5,freqmax-0.5,freqmax)
+                tr.remove_response(inventory=finv, pre_filt=pre_filt, output="DISP")
+    
+    # Name file base on start time
+    fileid=('%04d-%02d-%02d-%02d-%02d-%02d'%(stime.year,stime.month,stime.day,stime.hour,stime.minute,stime.second))
+    
+    # Plot seismic wave forms for inspection
+    if plot==True:
+        
+        if not os.path.exists(imgdir):
+            os.makedirs(imgdir)
+                    
+        fig, axs =plt.subplots(nrows=len(st2),sharex=True,sharey=False,figsize=(30,20))
+        plt.xlabel('Time (s)')
+        
+        for i in range(len(st2)):
+            axs[i].set_title("%s - %s: %s - %s"%(st2[i].stats.station,st2[i].stats.channel,st2[i].stats.starttime,st2[i].stats.endtime))
+            axs[i].plot(st2[i].times(),st2[i].data,'k')
+            axs[i].set_ylabel('Amp (Dis)')
+            axs[i].grid()
+            
+            max_val=np.max(abs(st2[i].data))
+            dis_val=2.5e-7
+            
+            if max_val < dis_val:
+                axs[i].plot(st2[i].times(),st2[i].data,'k')
+                axs[i].set_ylim(-1*dis_val,dis_val)
+                
+            elif max_val >= dis_val:
+                axs[i].plot(st2[i].times(),st2[i].data,'g')
+                axs[i].set_ylim(-1*max_val,max_val)
+                
+        plt.savefig("%s%s.png"%(imgdir,fileid))
+        plt.close(fig)  
+        
+        if openimg==True:
+        
+            os.system ("open %s%s.png"%(imgdir,fileid))
+
+    return st2
+
+def data_in(filename,stations,channels,freqmin=2,freqmax=20, plot=False,imgdir='images/',openimg=True,inv=True):
     """
     Seismic data reader with preprocessing and plotting functions.
     
@@ -73,6 +166,29 @@ def data_in(filename,stations,channels,freqmin=2,freqmax=10, plot=False,imgdir='
     st2=st2.detrend(type='linear')
     st2=st2.filter('bandpass',freqmin=freqmin,freqmax=freqmax)
     
+    
+#     for tr in st2:
+#         station=tr.stats.station
+#         channel=tr.stats.channel
+#         date=tr.stats.starttime
+
+#         # Add location in case not present. Needed for response removal.
+#         tr.stats.location='00'
+
+#         if inv==True:
+#             inv_file='Dataless/%s.dataless'%(station)
+#             print(inv_file)
+#             if not os.path.exists(inv_file):
+#                 print('Response file could not be found')            
+#                 pass
+#             else:
+#     #                 tr.taper(max_percentage=0.01,type='cosine')
+#                 finv = read_inventory(inv_file)
+
+#                 tr=tr.detrend(type='linear')
+#                 pre_filt = (freqmin,freqmin+0.5,freqmax-0.5,freqmax)
+#                 tr.remove_response(inventory=finv, pre_filt=pre_filt, output="DISP")
+
     # Name file base on start time
     fileid=('%04d-%02d-%02d-%02d-%02d-%02d'%(stime.year,stime.month,stime.day,stime.hour,stime.minute,stime.second))
     
@@ -100,7 +216,7 @@ def data_in(filename,stations,channels,freqmin=2,freqmax=10, plot=False,imgdir='
 
     return st2
     
-def tr_write(tr,path,id,resp=False,freqmin=0.01,freqmax=50):
+def tr_write(tr,path,id,resp=False,inv=False,freqmin=0.01,freqmax=50):
     """ Removes the instrument response, and exports data to a SAC format.
     
     Arguments:
@@ -133,8 +249,23 @@ def tr_write(tr,path,id,resp=False,freqmin=0.01,freqmax=50):
 #                 tr.taper(max_percentage=0.01,type='cosine')
             tr=tr.detrend(type='linear')
             pre_filt = (freqmin,freqmin+0.5,freqmax-0.5,freqmax)
-            seedresp = {'filename': resp_file, 'date':date, 'units': 'DISP'} 
-            tr.simulate(paz_remove=None, pre_filt=pre_filt, seedresp=seedresp)
+            tr.remove_response(inventory=inv, pre_filt=pre_filt, output="DISP")
+    else:
+        pass
+    
+    if inv==True:
+        inv_file='Dataless/%s.dataless'%(station)
+        print(inv_file)
+        if not os.path.exists(inv_file):
+            print('Response file could not be found')            
+            pass
+        else:
+#                 tr.taper(max_percentage=0.01,type='cosine')
+            finv = read_inventory(inv_file)
+    
+            tr=tr.detrend(type='linear')
+            pre_filt = (freqmin,freqmin+0.5,freqmax-0.5,freqmax)
+            tr.remove_response(inventory=finv, pre_filt=pre_filt, output="DISP")
     else:
         pass
     
@@ -152,3 +283,25 @@ def tr_write(tr,path,id,resp=False,freqmin=0.01,freqmax=50):
     tr.write(filename,format='SAC')
     
     return file
+
+def event_log(id,rawfile,obsfile):
+    """
+    Event log file for ISpy.
+    
+    Arguments:
+    Required:
+    id - event id
+    rawfile - original raw waveform file
+    obsfile - NNLOC obs file name
+    """
+    
+    fname='data/%s/%s.log'%(id,id)
+    logfile=open(fname,'x')
+    
+    logfile.write("ISpy event file, created %s\n"%((time.asctime())))
+    logfile.write("EVENT %s\n"%(id))
+    logfile.write("RAW %s\n"%(rawfile))
+    logfile.write("OBSFILE %s\n"%(obsfile))
+    
+    logfile.close()
+    
